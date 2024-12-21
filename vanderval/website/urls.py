@@ -2,11 +2,13 @@ from django.urls import path
 from website.views import (
                 SiteListAPIView, SiteOperationAPIView,
                 UserRecordsListAPIView, UserRecordsOperationAPIView,
-                JobListAPIView, JobOperationAPIView  
+                JobListAPIView, JobOperationAPIView,
+                Endpoints  
                 )
+app_name = 'website'
 
 urlpatterns = [
-    path('',),
+    path('',Endpoints, name='endpoints'),
     path('sites/', SiteListAPIView.as_view(), name='site-list'),
     path('sites/<int:site_id>/', SiteOperationAPIView.as_view(), name='site-operation'),
     path('user-records/', UserRecordsListAPIView.as_view(), name='user-records-list'),

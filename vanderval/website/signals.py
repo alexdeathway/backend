@@ -1,14 +1,17 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save,pre_save
 from django.dispatch import receiver
-from .models import Job, UserRecords
+from website.models import Job, UserRecords
+from django.db import transaction
 
 @receiver(post_save, sender=Job)
 def update_customer_type_after_job(sender, instance, created, **kwargs):
     '''
-    this handle the situation where new job are created amd we need 
-    to update the customer type of the user.
+    This handles the situation where a new job is created or an existing job is updated,
+    and we need to update the customer type of the user.
     '''
-    if created:
-        user = instance.user
-        user.customer_type = user._calculate_customer_type()  
-        user.save()  
+    user = instance.user
+    user.customer_type = user._calculate_customer_type()
+    print(f"-----User {user.name} updated to {user.customer_type}") 
+    user.save()
+    
+

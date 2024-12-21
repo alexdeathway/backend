@@ -1,57 +1,87 @@
 import logging
 from time import sleep
-
-from .models import Site, UserRecords
+from celery import shared_task
+from .models import Job
+from website.priority import prioritize_sites
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-
-def task_01(site_id: int):
+@shared_task
+def task_01(job_id: int):
     TIME_MULTIPLIER = 0.001 # very fast execution per record
-    site = Site.objects.get(id=site_id)
-    records = UserRecords.objects.filter(site=site)
-    for record in records:
-        sleep(TIME_MULTIPLIER)
-        logger.info("Task 01: {} processed".format(record.name))
+    job= Job.objects.get(id=job_id)
+    sleep(TIME_MULTIPLIER)
+    logger.info(f"Task 01: {job.user.name}'s job id {job.pk} processed ")
+    job.status = "completed"
+    job.save()
     return True
 
-
-def task_02(site_id: int):
+@shared_task
+def task_02(job_id: int):
     TIME_MULTIPLIER = 0.01
-    site = Site.objects.get(id=site_id)
-    records = UserRecords.objects.filter(site=site)
-    for record in records:
-        sleep(TIME_MULTIPLIER)
-        logger.info("Task 02: {} processed".format(record.name))
+    job = Job.objects.get(id=job_id)
+    sleep(TIME_MULTIPLIER)
+    logger.info(f"Task 02: {job.user.name}'s job id {job.pk} processed ")
+    job.status = "completed"
+    job.save()
     return True
 
-
-def task_03(site_id: int):
+@shared_task
+def task_03(job_id: int):
     TIME_MULTIPLIER = 0.1
-    site = Site.objects.get(id=site_id)
-    records = UserRecords.objects.filter(site=site)
-    for record in records:
-        sleep(TIME_MULTIPLIER)
-        logger.info("Task 03: {} processed".format(record.name))
+    job = Job.objects.get(id=job_id)
+    sleep(TIME_MULTIPLIER)
+    logger.info(f"Task 03: {job.user.name}'s job id {job.pk} processed ")
+    job.status = "completed"
+    job.save()
     return True
 
-
-def task_04(site_id: int):
+@shared_task
+def task_04(job_id: int):
     TIME_MULTIPLIER = 1
-    site = Site.objects.get(id=site_id)
-    records = UserRecords.objects.filter(site=site)
-    for record in records:
-        sleep(TIME_MULTIPLIER)
-        logger.info("Task 04: {} processed".format(record.name))
+    job = Job.objects.get(id=job_id)
+    sleep(TIME_MULTIPLIER)
+    logger.info(f"Task 04: {job.user.name}'s job id {job.pk} processed ")
+    job.status = "completed"
+    job.save()
     return True
 
-
-def task_05(site_id: int):
+@shared_task
+def task_05(job_id: int):
     TIME_MULTIPLIER = 10
-    site = Site.objects.get(id=site_id)
-    records = UserRecords.objects.filter(site=site)
-    for record in records:
-        sleep(TIME_MULTIPLIER)
-        logger.info("Task 05: {} processed".format(record.name))
+    job = Job.objects.get(id=job_id)
+    sleep(TIME_MULTIPLIER)
+    logger.info(f"Task 05: {job.user.name}'s job id {job.pk} processed ")
+    job.status = "completed"
+    job.save()
     return True
+
+
+@shared_task
+def task_distributer():
+    #we have two matrics to consider for the priority score
+    #no.of user with "HyperActive" > "VeryActive" > "Active"
+    # no. of pending task 01> task 02 > task 03 > task 04 > task 05
+    
+    sites = prioritize_sites()
+    for site in sites:
+        if Job.objects.filter(site=site, status="pending").exists():
+            pending_jobs = Job.objects.filter(site=site, status="pending")
+            for job in pending_jobs:
+                if job.task_type == Job.TASK_01:
+                    task_01.delay(job.id)
+                elif job.task_type == Job.TASK_02:
+                    task_02.delay(job.id)
+                elif job.task_type == Job.TASK_03:
+                    task_03.delay(job.id)
+                elif job.task_type == Job.TASK_04:
+                    task_04.delay(job.id)
+                elif job.task_type == Job.TASK_05:
+                    task_05.delay(job.id)
+                else:
+                    logger.info(f"Task type not found for job id {job.id}")
+    return True
+
+    
+    

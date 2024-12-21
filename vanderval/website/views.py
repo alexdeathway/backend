@@ -8,8 +8,13 @@ from rest_framework.decorators import api_view
 
 #importing the models and serializers
 from website.models import Site, UserRecords, Job
-from website.serializers import SiteSerializer, UserRecordsSerializer, JobSerializer
+from website.serializers import ( SiteSerializer, UserRecordsSerializer, JobSerializer,
+                                SiteDetailSerializer, UserRecordsDetailSerializer,
+                                JobDetailSerializer)
 
+
+#importing task distributer
+from website.tasks import task_distributer
 '''
 
 <Model>ListAPIView> - This view suppport GET and POST request for the model
@@ -24,15 +29,24 @@ from website.serializers import SiteSerializer, UserRecordsSerializer, JobSerial
 
 
 @api_view(['GET'])
-def Endpoint(request):
+def Endpoints(request):
+    '''
+    a request to this view will return all the endpoints available in this webapp   
+    '''
     routes={
         '':'list of endpoints',
+        
         'sites/':'[GET,POST]list of all site on this webapp or create single or multiple sites ',
+        
         'sites/<site_id>':'[GET,UPDATE,DELETE] specific site',
+        
         'user-records/':'[GET,POST] list of all users on this webapp or create single or multiple users',
+        
         'user-records/<int:user_records_id>': '[GET,UPDATE,DELETE] specific site',
+        
         'jobs/':'[GET,POST] list of all jobs on this webapp or create single or multiple jobs',
-        'jobs/<int:job_id>/':'[GET,UPDATE,DELETE] specific site'
+        
+        'jobs/<int:job_id>/':'[GET,UPDATE,DELETE] specific job'
     }
     return Response(routes)
     
@@ -86,6 +100,7 @@ class JobListAPIView(APIView):
             serializer = JobSerializer(data=request.data, many=isinstance(request.data, list))
             if serializer.is_valid():
                 serializer.save()
+                #task_distributer.delay() #calling the task distributer
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -93,7 +108,7 @@ class SiteOperationAPIView(APIView):
     
     def get(self, request, site_id):
         site = Site.objects.get(id=site_id)
-        serializer = SiteSerializer(site)
+        serializer = SiteDetailSerializer(site)
         return Response(serializer.data)
 
     def put(self, request, site_id):
@@ -114,7 +129,7 @@ class UserRecordsOperationAPIView(APIView):
 
     def get(self, request, user_records_id):
         user_records = UserRecords.objects.get(id=user_records_id)
-        serializer = UserRecordsSerializer(user_records)
+        serializer = UserRecordsDetailSerializer(user_records)
         return Response(serializer.data)
 
     def put(self, request, user_records_id):
@@ -136,7 +151,7 @@ class JobOperationAPIView(APIView):
     
     def get(self, request, job_id):
         job = Job.objects.get(id=job_id)
-        serializer = JobSerializer(job)
+        serializer = JobDetailSerializer(job)
         return Response(serializer.data)
 
     def put(self, request, job_id):

@@ -24,7 +24,7 @@ class Site(models.Model):
 
 # you can choose to reuse the User model from django.contrib.auth.models
 class UserRecords(models.Model):
-    site = models.ForeignKey(Site, on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name="user_records")
     name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=15)
@@ -43,11 +43,11 @@ class UserRecords(models.Model):
         we will be priotizing the customer based on the number of jobs they have.
         like hyperactive will be given more priority than all other types.
         """
-        job_count = Job.objects.filter(user=self).count()
+        job_count = Job.objects.filter(user=self, status='pending').count()
         if job_count < 5:
             return "Active"
         elif job_count < 10:
-            return "VeryActive" 
+            return "VeryActive"
         return "HyperActive"
     
 
@@ -60,8 +60,8 @@ class UserRecords(models.Model):
 
 
 class Job(models.Model):
-    '''
-    objective 1 [in readme], customer request job 
+    '''omer request jo
+    objective 1 [in readme], 
     '''
     TASK_01 = 'task_01'
     TASK_02 = 'task_02'
@@ -76,7 +76,7 @@ class Job(models.Model):
         (TASK_04, 'Task 04'),
         (TASK_05, 'Task 05'),
     )
-    user = models.ForeignKey(UserRecords, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserRecords, on_delete=models.CASCADE,related_name="jobs")
     site = models.ForeignKey(Site, on_delete=models.CASCADE)
     execution_time = models.FloatField()
     task_type = models.CharField(max_length=10, choices=TASK_CHOICES, blank=True)
@@ -85,24 +85,31 @@ class Job(models.Model):
 
     def save(self, *args, **kwargs):
         '''
-        we will need a validation for thsi field. as only task with
+        we will need a validation for this field. as only task with
         execution time of 0.001, 0.01, 0.1, 1, 10 seconds and below will be considered
         valid
 
         '''
-        if not self.task_type:
-            if self.execution_time <= 0.001:
-                self.task_type = self.TASK_01
-            elif self.execution_time <= 0.01:
-                self.task_type = self.TASK_02
-            elif self.execution_time <= 0.1:
-                self.task_type = self.TASK_03
-            elif self.execution_time <= 1:
-                self.task_type = self.TASK_04
-            elif self.execution_time <= 10:
-                self.task_type = self.TASK_05
+        
+        if self.execution_time <= 0.001:
+            self.task_type = self.TASK_01
+        elif self.execution_time <= 0.01:
+            self.task_type = self.TASK_02
+        elif self.execution_time <= 0.1:
+            self.task_type = self.TASK_03
+        elif self.execution_time <= 1:
+            self.task_type = self.TASK_04
+        elif self.execution_time <= 10:
+            self.task_type = self.TASK_05
+        else:
+            self.status = "failed"
+
+        
+        
+        #updating the customer type of the user record 
+        
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.user.name} - {self.task_type}"
+        return f"{self.user.name} -{self.pk}- {self.task_type}"
 
