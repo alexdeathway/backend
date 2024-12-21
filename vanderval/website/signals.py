@@ -3,6 +3,8 @@ from django.dispatch import receiver
 from website.models import Job, UserRecords
 from django.db import transaction
 
+print("Signals file loaded!")
+
 @receiver(post_save, sender=Job)
 def update_customer_type_after_job(sender, instance, created, **kwargs):
     '''

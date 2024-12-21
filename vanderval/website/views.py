@@ -100,7 +100,7 @@ class JobListAPIView(APIView):
             serializer = JobSerializer(data=request.data, many=isinstance(request.data, list))
             if serializer.is_valid():
                 serializer.save()
-                #task_distributer.delay() #calling the task distributer
+                task_distributer.delay() #calling the task distributer
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
