@@ -13,7 +13,7 @@ python manage.py migrate
 if [[ "$DEBUG" == "True" ]]; then
   if [ -f "db.json" ]; then
     echo "Loading dummy database..."
-    python3 manage.py loaddata db.json
+    python manage.py loaddata --exclude auth.permission --exclude contenttypes db.json
   else
     echo "looks like there is no dummy database or fixture to load..."
   fi
