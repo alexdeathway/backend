@@ -13,7 +13,6 @@ def update_customer_type_after_job(sender, instance, created, **kwargs):
     '''
     user = instance.user
     user.customer_type = user._calculate_customer_type()
-    print(f"-----User {user.name} updated to {user.customer_type}") 
     user.save()
     
 

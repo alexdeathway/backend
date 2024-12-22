@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.decorators import api_view
-
+from rest_framework.pagination import PageNumberPagination
 
 #importing the models and serializers
 from website.models import Site, UserRecords, Job
@@ -54,8 +54,11 @@ def Endpoints(request):
 class SiteListAPIView(APIView):
     
     def get(self, request):
-        sites = Site.objects.all()
-        serializer = SiteSerializer(sites, many=True)
+        sites = Site.objects.all().order_by('-pk')
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_sites = paginator.paginate_queryset(sites, request)
+        serializer = SiteSerializer(paginated_sites, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -73,10 +76,13 @@ class SiteListAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserRecordsListAPIView(APIView):
-   
+       
     def get(self, request):
-        user_records = UserRecords.objects.all()
-        serializer = UserRecordsSerializer(user_records, many=True)
+        user_records = UserRecords.objects.all().order_by('-pk')
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_user_records = paginator.paginate_queryset(user_records, request)
+        serializer = UserRecordsSerializer(paginated_user_records, many=True)
         return Response(serializer.data)
 
     
@@ -91,8 +97,11 @@ class UserRecordsListAPIView(APIView):
 class JobListAPIView(APIView):
     
     def get(self, request):
-        jobs = Job.objects.all()
-        serializer = JobSerializer(jobs, many=True)
+        jobs = Job.objects.all().order_by('-pk')
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        paginated_jobs = paginator.paginate_queryset(jobs, request)
+        serializer = JobSerializer(paginated_jobs, many=True)
         return Response(serializer.data)
 
     def post(self, request):

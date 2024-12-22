@@ -52,7 +52,7 @@ class UserRecords(models.Model):
     
 
     def save(self, *args, **kwargs):
-        self.customer_type = self._calculate_customer_type()
+        self.customer_type = "Active"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -60,8 +60,8 @@ class UserRecords(models.Model):
 
 
 class Job(models.Model):
-    '''omer request jo
-    objective 1 [in readme], 
+    '''
+    job model
     '''
     TASK_01 = 'task_01'
     TASK_02 = 'task_02'

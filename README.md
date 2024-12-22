@@ -1,52 +1,121 @@
-# What is this about?
+## Assignment Solution
+---
+Read the original assignment README [here](./docs/README.md)
 
-there is a list of customers in the Site table. Each customer has a unique id and a name. Our servers are shared across all customers. Since resources are shared amongst all customers, we need to dynamically handle their asynchronous tasks. We need to create a system to handle the following tasks:
+Assignment by: [Sarvesh Yadav](https://github.com/alexdeathway)  
+Email: ccsarveshyadav@gmail.com
 
-1. create a datastructure/store to store type of job based on their execution time. you can assume time in seconds and there are 5 types of jobs.
-2. create a datastructure/store to store type of customer based on their record volume. large volume customers will tend to comsume more resources. you can assume there are 3 types of customers.
-3. create relevant apis to support the interactions.
-4. create workers which will pick up the job based on the customer type and job type and execute them. you can assume that each worker can execute only one job at a time.
+### Breaking down the problem statement
 
-refer website/models.py for Site Table <br>
-refer website/tasks.py for the tasks to be executed
-
-you can use any database, message queue, etc. to store the data. you can use any library to create the workers or any other part of the system. you can create any number of files, classes, functions, etc. to complete the assignment.
-
-# Setup:
+We need to create a system that allows us to handle different types of jobs based on their execution time and various customer types based on their record volume, while also considering resource limitations. Additionally, users are associated with sites.
 
 ```
-install python3.5, pip3 and venv
-$ python3.5 -m venv almabase-venv
-$ source almabase-venv/bin/activate
-$ pip install --upgrade pip --trusted-host pypi.python.org
-$ pip3 install -r requirements.txt
+
+├── Site
+│   ├── UserRecord1
+│   │  	    ├── JOB1
+│   │       └── JOB2
+│   │       
+│   └── UserRecord2
+│           ├── JOB3
+│           ├── JOB9
+│           ├── JOB10
+│           └── JOB4
+├── Site2
+    ├── UserRecord3
+    │  	    ├── JOB5
+    │       └── JOB6
+    │       
+    └── UserRecord4
+            ├── JOB7
+            └── JOB8
 ```
 
-# How to submit the assignment:
 
-1. Fork this repository
-2. Create a new branch with your name
-3. Commit your code to this branch
-4. Create a pull request to this repository
-5. Add your name and email to the README.md file
 
-# What will be evaluated?
+#### We will break down the problem into the following objectives:
+----
+- Create a model for the job and assign it a type based on its execution time.
+- Add additional fields to the UserRecord to handle the customer type.
+  - We will have three types of customers based on how many jobs they have in the queue:
+    - **Active**: Customers with fewer jobs.
+    - **Very Active**: Customers with a moderate number of jobs.
+    - **Hyperactive**: Customers with many jobs.
+- Implement a task distributor (refer to `website/tasks.py`) that will distribute tasks based on the customer type and job type to our Celery workers.
+  - We will have 5 types of jobs based on their execution time.
+  - A site priority queue will be created with job and customer type to calculate the priority of the site. Refer to `website/priority.py`.
+  - Sites with higher priority (i.e., those with many highly active users and less resource-intensive jobs) will be picked up by the worker first. 
 
-1. Code quality
-2. high level design
-3. api design
+## Functioning
+---
+### 1. Endpoints
 
-# Bonus:
+All endpoints are available at `website/`.
 
-create a deployment pipeline to deploy on a ubuntu VM. you can use any CI/CD tool for the same. <br>
-or <br>
-deploy on your own cloud provider and share the link with us.
+![img](./docs/assets/almabase_screengrab_endpoints.png)
 
-# What next?
+### 2. Submitting and Retrieving Sites and User Records
 
-Once you have submitted the assignment, we will review your code and if it meets our requirements, we will get back to you within a week and schedule 1st round of interview. <br>
-in the 1st round of interview, we will discuss the code and build few additional features.
+You can submit single or multiple sites at `website/sites` or `sites`, and user records at `website/user-records` or `user-records`.
 
-### <i>Name</i>: Rajeev K L
-### <i>Email</i>: rajeev@almabase.com
-### <i>JD</i>: [Software Engineer](https://www.almabase.com/careers?ashby_jid=27df3851-fcea-47e2-af51-4c5aec17ff67)
+#### Site List 
+![img](./docs/assets/almabase_screengrab_sites.png)
+
+#### User Record List
+![img](./docs/assets/almabase_screengrab_userrecords.png)
+
+### 3. Submitting and Retrieving Jobs 
+
+Submit the following batch of jobs for processing:
+
+```json
+[
+    {"user": 2, "site": 1, "execution_time": 9.8887},
+    {"user": 3, "site": 2, "execution_time": 0.0895},
+    {"user": 5, "site": 2, "execution_time": 8.4956},
+    {"user": 3, "site": 1, "execution_time": 7.4985},
+    {"user": 2, "site": 4, "execution_time": 8.5381},
+    {"user": 2, "site": 3, "execution_time": 8.4382},
+    {"user": 3, "site": 3, "execution_time": 2.3003},
+    {"user": 1, "site": 4, "execution_time": 0.3739},
+    {"user": 2, "site": 1, "execution_time": 5.1969},
+    {"user": 4, "site": 1, "execution_time": 4.8443},
+    {"user": 1, "site": 1, "execution_time": 4.3946},
+    {"user": 3, "site": 1, "execution_time": 7.4142},
+    {"user": 2, "site": 4, "execution_time": 1.025},
+    {"user": 2, "site": 4, "execution_time": 0.9082},
+    {"user": 4, "site": 2, "execution_time": 2.428},
+    {"user": 2, "site": 2, "execution_time": 2.0037},
+    {"user": 1, "site": 4, "execution_time": 3.6222},
+    {"user": 3, "site": 3, "execution_time": 8.155},
+    {"user": 1, "site": 5, "execution_time": 4.1567},
+    {"user": 4, "site": 2, "execution_time": 6.8682}
+]
+
+```
+
+#### Job Being Received by Celery Worker
+![img](./docs/assets/almabase_screengrab_terminal_receiving_jobs.png)
+
+#### Job Processed Log Output
+![img](./docs/assets/almabase_screengrab_terminal_job_processed.png)
+
+#### Getting Job Details
+You can get the job details at `website/jobs/<job_id>`.
+![img](./docs/assets/almabase_screengrab_job_detail.png)
+
+### 4. Getting User Details
+Get user details and all their jobs by visiting website/user-records/<user_record_id>.
+![img](./docs/assets/almabase_screengrab_user_detail.png)
+
+## Setting Up Development Environment
+
+1. Create the .dev.env file (use template.dev.env for reference):
+
+ >cp template.dev.env .dev.env
+
+2. Start Docker:
+> docker compose up --build
+
+---
+
