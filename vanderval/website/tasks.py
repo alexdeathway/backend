@@ -61,7 +61,7 @@ def task_05(job_id: int):
 @shared_task
 def task_distributer():
     #we have two matrics to consider for the priority score
-    #no.of user with "HyperActive" > "VeryActive" > "Active"
+    #no.of user in a site RECORD_CAPACITY_LOW, RECORD_CAPACITY_MEDIUM, RECORD_CAPACITY_HIGH
     # no. of pending task 01> task 02 > task 03 > task 04 > task 05
     
     sites = prioritize_sites()
@@ -81,6 +81,7 @@ def task_distributer():
                     task_05.delay(job.id)
                 else:
                     logger.info(f"Task type not found for job id {job.id}")
+   
     return True
 
     

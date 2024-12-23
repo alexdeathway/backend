@@ -3,34 +3,34 @@ from django.db.models import Count
 
 
 '''
-objective 4 [in readme]
+[updated as per discussion on PR#1] objective 4 [in readme]
 we are here creating a function that will calculate the priority score for the site
-on tthe basis of the level of activity of users and the pending tasks.
+on the basis of the following metrics:
+
+1. no of active users in the site that is RECORD_CAPACITY_LOW, RECORD_CAPACITY_MEDIUM, RECORD_CAPACITY_HIGH
+2.type of job in the site(execution time).
+
 '''
+from .models import Site, Job
+from django.db.models import Count
 
 def get_priority_score(site):
     """
-    Calculate priority score for the site based on the given metrics.
-    Higher scores indicate higher priority.
+    Calculate priority score for the site based on the given metrics:
+    1. Record capacity: High > Medium > Low
+    2. Pending tasks: task_01 > task_02 > task_03 > task_04 > task_05
     """
-    # User priorities: "HyperActive" > "VeryActive" > "Active"
-    user_priority_weights = {
-        "HyperActive": 3,
-        "VeryActive": 2,
-        "Active": 1,
+    # Record capacity priority weights
+    record_capacity_weights = {
+        Site.RECORD_CAPACITY_HIGH: 3,
+        Site.RECORD_CAPACITY_MEDIUM: 2,
+        Site.RECORD_CAPACITY_LOW: 1,
     }
 
-    user_counts = site.user_records.filter(is_active=True).values("customer_type").annotate(
-        count=Count("id")
-    )
+    
+    record_capacity_score = record_capacity_weights.get(site.record_capicity, 0)
 
-    user_priority_score = sum(
-        user_priority_weights[user["customer_type"]] * user["count"]
-        for user in user_counts
-        if user["customer_type"] in user_priority_weights
-    )
-
-   
+    
     task_priority_weights = {
         "task_01": 5,
         "task_02": 4,
@@ -39,6 +39,7 @@ def get_priority_score(site):
         "task_05": 1,
     }
 
+   
     task_counts = Job.objects.filter(site=site, status="pending").values("task_type").annotate(
         count=Count("id")
     )
@@ -48,13 +49,13 @@ def get_priority_score(site):
         for task in task_counts
         if task["task_type"] in task_priority_weights
     )
-    total_priority_score = user_priority_score + task_priority_score
+
+    total_priority_score = record_capacity_score + task_priority_score
     return total_priority_score
 
 def prioritize_sites():
     """
     Get all sites sorted by priority score in descending order.
-    we will use this list to pass the site to the task_distributer
     """
     sites = Site.objects.all()
     sites_with_priority = sorted(sites, key=lambda site: get_priority_score(site), reverse=True)

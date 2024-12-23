@@ -18,6 +18,8 @@ class Site(models.Model):
     url = models.URLField()
     description = models.TextField()
     record_capicity = models.IntegerField(choices=RECORD_CAPACITY_CHOICES)
+    total_users = models.IntegerField(default=0)
+    total_jobs = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -35,25 +37,8 @@ class UserRecords(models.Model):
     pincode = models.CharField(max_length=10)
     dob = models.DateField()
     is_active = models.BooleanField(default=True)  # Do not count for active records if False
-    customer_type = models.CharField(max_length=20, blank=True)
-
-    def _calculate_customer_type(self):
-        """
-        objective 2[in readme]: Determine customer type based on job count.
-        we will be priotizing the customer based on the number of jobs they have.
-        like hyperactive will be given more priority than all other types.
-        """
-        job_count = Job.objects.filter(user=self, status='pending').count()
-        if job_count < 5:
-            return "Active"
-        elif job_count < 10:
-            return "VeryActive"
-        return "HyperActive"
     
 
-    def save(self, *args, **kwargs):
-        self.customer_type = "Active"
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

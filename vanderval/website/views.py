@@ -144,7 +144,7 @@ class UserRecordsOperationAPIView(APIView):
     def put(self, request, user_records_id):
         user_records = UserRecords.objects.get(id=user_records_id)
         data = json.loads(request.body)
-        serializer = UserRecordsSerializer(user_records, data=data)
+        serializer = SiteSerializer(user_records, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
