@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
+from django.http import Http404
 
 #importing the models and serializers
 from website.models import Site, UserRecords, Job
@@ -114,14 +115,20 @@ class JobListAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SiteOperationAPIView(APIView):
+
+    def get_object_by_id(self, site_id):
+        try:
+            return Site.objects.get(id=site_id)
+        except Site.DoesNotExist:
+            raise Http404
     
     def get(self, request, site_id):
-        site = Site.objects.get(id=site_id)
+        site = self.get_object_by_id(site_id)
         serializer = SiteDetailSerializer(site)
         return Response(serializer.data)
 
     def put(self, request, site_id):
-        site = Site.objects.get(id=site_id)
+        site = self.get_object_by_id(site_id)
         data = json.loads(request.body)
         serializer = SiteSerializer(site, data=data)
         if serializer.is_valid():
@@ -130,19 +137,25 @@ class SiteOperationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, site_id):
-        site = Site.objects.get(id=site_id)
+        site = self.get_object_by_id(site_id)
         site.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 class UserRecordsOperationAPIView(APIView):
 
+    def get_object_by_id(self, user_records_id):
+        try:
+            return UserRecords.objects.get(id=user_records_id)
+        except UserRecords.DoesNotExist:
+            raise Http404
+    
     def get(self, request, user_records_id):
-        user_records = UserRecords.objects.get(id=user_records_id)
+        user_records=self.get_object_by_id(user_records_id)
         serializer = UserRecordsDetailSerializer(user_records)
         return Response(serializer.data)
 
     def put(self, request, user_records_id):
-        user_records = UserRecords.objects.get(id=user_records_id)
+        user_records=self.get_object_by_id(user_records_id)
         data = json.loads(request.body)
         serializer = SiteSerializer(user_records, data=data)
         if serializer.is_valid():
@@ -151,20 +164,26 @@ class UserRecordsOperationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, user_records_id):
-        user_records = UserRecords.objects.get(id=user_records_id)
+        user_records=self.get_object_by_id(user_records_id)
         user_records.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class JobOperationAPIView(APIView):
+
+    def get_object_by_id(self, job_id):
+        try:
+            return Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            raise Http404
     
     def get(self, request, job_id):
-        job = Job.objects.get(id=job_id)
+        job = self.get_object_by_id(job_id)
         serializer = JobDetailSerializer(job)
         return Response(serializer.data)
 
     def put(self, request, job_id):
-        job = Job.objects.get(id=job_id)
+        job = self.get_object_by_id(job_id)
         data = json.loads(request.body)
         serializer = JobSerializer(job, data=data)
         if serializer.is_valid():
@@ -173,6 +192,6 @@ class JobOperationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, job_id):
-        job = Job.objects.get(id=job_id)
+        job = self.get_object_by_id(job_id)
         job.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
